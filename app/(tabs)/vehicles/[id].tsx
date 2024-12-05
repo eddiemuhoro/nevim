@@ -1,116 +1,145 @@
+import React, { useRef, useState } from "react";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import moment from "moment";
+import { WebView } from "react-native-webview";
 import Box from "@/components/reusable/Box";
 import ThemedButton from "@/components/reusable/Buttons";
 import Page from "@/components/reusable/Page";
 import ThemedIcon from "@/components/reusable/ThemedIcon";
 import ThemedText from "@/components/reusable/ThemedText";
 import { useTheme } from "@/hooks/useTheme.hook";
-import { VehicleType } from "@/types/vehicle.types";
+import { useLocalSearchParams } from "expo-router";
 import {
   commaSeparatedNumber,
   generateRandomPastelColor,
 } from "@/utils/ui.utils";
-import { Stack, router, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Button,
-  Image,
-  Modal,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import moment from "moment";
-import { vehicles } from "./index";
 import VehicleLocation from "@/components/vehicle/PhoneLocator";
 
 export default function VehicleDetails() {
-  const router = useRouter();
-  // const vehicle = JSON.parse(vehicleJson) as VehicleType;
+  const webViewRef = useRef<WebView>(null);
+
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+
   const { id, vehicle: vehicleJson } = useLocalSearchParams();
   const vehicle =
     typeof vehicleJson === "string" ? JSON.parse(vehicleJson) : null;
 
-  console.log(vehicle);
+  const initialStartDate = moment().subtract(7, "days").toDate();
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateToChange, setDateToChange] = useState("");
 
   if (!vehicle) {
     return (
-      <View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text>Vehicle not found</Text>
       </View>
     );
   }
 
-  console.log(vehicle.vehicleRegNumber);
-
   const accentColor = generateRandomPastelColor();
-
-  const insets = useSafeAreaInsets();
-
-  const initialStartDate = moment().subtract(7, "days").toDate();
-  const [startDate, setStartDate] = useState(initialStartDate);
-  const [endDate, setEndDate] = useState(new Date());
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dateToChange, setDateToChange] = useState("nkghgvjgj");
 
   const totalDistance = vehicle.dailyDistances
     .filter(({ date }: { date: string }) => {
       const momentDate = moment(date, "DD-MM-YYYY");
-      const isSameOrAfterStart = momentDate.isSameOrAfter(
-        moment(startDate),
-        "day"
+      return (
+        momentDate.isSameOrAfter(moment(startDate), "day") &&
+        momentDate.isSameOrBefore(moment(endDate), "day")
       );
-      const isSameOrBeforeEnd = momentDate.isSameOrBefore(
-        moment(endDate),
-        "day"
-      );
-      const isWithinRange = momentDate.isBetween(
-        moment(startDate),
-        moment(endDate),
-        "day",
-        "[]"
-      ); // '[]' includes start and end dates
-      return isSameOrAfterStart && isSameOrBeforeEnd && isWithinRange;
     })
     .reduce((total: number, { distance }: { distance: string }) => {
       const parsedDistance = parseFloat(distance);
       return total + (isNaN(parsedDistance) ? 0 : parsedDistance);
     }, 0);
 
-  const theme = useTheme();
+  // Parse vehicle coordinates
+  const lat = parseFloat(vehicle.coordinates.lat);
+  const lng = parseFloat(vehicle.coordinates.lng);
+
+  console.log(vehicle.coordinates);
+
+  const leafletHTML = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        // Initialize the map
+        var map = L.map('map').setView([${lat}, ${lng}], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+  
+        // Add marker for vehicle location
+        var vehicleMarker = L.marker([${lat}, ${lng}]).addTo(map).bindPopup("Vehicle Location").openPopup();
+  
+        // Placeholder for phone location
+        var phoneMarker;
+        var polyline;
+  
+        // Function to update phone location and draw line
+        function updatePhoneLocation(lat, lng) {
+          if (!phoneMarker) {
+            phoneMarker = L.marker([lat, lng], { color: "blue" }).addTo(map).bindPopup("Phone Location");
+          } else {
+            phoneMarker.setLatLng([lat, lng]).openPopup();
+          }
+  
+          // Draw a line between phone and vehicle
+          if (polyline) {
+            map.removeLayer(polyline);
+          }
+          polyline = L.polyline([[${lat}, ${lng}], [lat, lng]], { color: "red" }).addTo(map);
+        }
+  
+        // Listen for messages from React Native
+        window.addEventListener("message", function(event) {
+          try {
+            var data = JSON.parse(event.data);
+            if (data.type === "updatePhoneLocation") {
+              updatePhoneLocation(data.lat, data.lng);
+            }
+          } catch (e) {
+            console.error("Error parsing message data:", e);
+          }
+        });
+      });
+    </script>
+  </body>
+  </html>
+  `;
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          header: () => (
-            <Box
-              block
-              direction="row"
-              px={20}
-              justify="space-between"
-              align="center"
-              pt={insets.top + 10}
-              gap={20}
-            >
-              <ThemedButton
-                onPress={() => {
-                  router.back();
-                }}
-                pa={9}
-                type="secondary-outlined"
-              >
-                <ThemedIcon name={"chevron-left"} />
-              </ThemedButton>
-
-              <Box width={30}></Box>
-            </Box>
-          ),
-        }}
-      />
       <Page px={20} gap={15} scrollable>
         <Box
           gap={5}
@@ -141,6 +170,7 @@ export default function VehicleDetails() {
             {vehicle.vehicleRegNumber}
           </ThemedText>
         </Box>
+
         <Box color={theme.surface} radius={25} pa={15}>
           <Box direction="row" align="center" gap={10}>
             <Box
@@ -162,6 +192,7 @@ export default function VehicleDetails() {
               </ThemedText>
               <ThemedText weight="bold">
                 {commaSeparatedNumber(parseFloat(vehicle.totalDistanceCovered))}{" "}
+                km
               </ThemedText>
             </Box>
           </Box>
@@ -189,7 +220,7 @@ export default function VehicleDetails() {
               <ThemedText weight="bold">
                 {vehicle.dailyDistances[0]
                   ? commaSeparatedNumber(
-                      parseFloat(vehicle.dailyDistances[0]?.distance)
+                      parseFloat(vehicle.dailyDistances[0]?.distance ?? 0)
                     )
                   : 0}{" "}
                 km
@@ -354,23 +385,13 @@ export default function VehicleDetails() {
               </ThemedButton>
             </Box>
             <Box height={280} block radius={20} overflow="hidden">
-              <MapView
-                style={{ width: "100%", height: "100%", flex: 1 }}
-                initialRegion={{
-                  latitude: parseFloat(vehicle.coordinates.lat),
-                  longitude: parseFloat(vehicle.coordinates.lng),
-                  latitudeDelta: 0.22,
-                  longitudeDelta: 0.21,
-                }}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: parseFloat(vehicle.coordinates.lat),
-                    longitude: parseFloat(vehicle.coordinates.lng),
-                  }}
-                  title={vehicle.vehicleRegNumber}
-                />
-              </MapView>
+              <WebView
+                ref={webViewRef}
+                originWhitelist={["*"]}
+                source={{ html: leafletHTML }}
+                javaScriptEnabled
+                domStorageEnabled
+              />
             </Box>
           </Box>
         </Box>

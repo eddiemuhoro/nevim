@@ -29,7 +29,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: "gray", // color for inactive tabs
       }}
     >
-      {/* <Tabs.Screen
+      <Tabs.Screen
         name="vehicles"
         options={{
           title: "Vehicles",
@@ -41,20 +41,8 @@ export default function TabLayout() {
             />
           ),
         }}
-      /> */}
-      <Tabs.Screen
-        name="bodas"
-        options={{
-          title: "Boda",
-          tabBarIcon: ({ size }) => (
-            <ImageIcon
-              source={require("@/assets/images/home.png")}
-              size={"50%"}
-              resizeMode="contain"
-            />
-          ),
-        }}
       />
+
       <Tabs.Screen
         name="settings"
         options={{
