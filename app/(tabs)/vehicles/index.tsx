@@ -24,62 +24,6 @@ export const vehicles: VehicleType[] = [
       { distance: "60 km", date: "2024-12-02" },
     ],
   },
-  {
-    deviceId: "DEV67890",
-    vehicleRegNumber: "XYZ456",
-    totalDistanceCovered: "2000 km",
-
-    coordinates: {
-      lat: "0.515893",
-      lng: "35.264436",
-    },
-    dailyDistances: [
-      { distance: "80 km", date: "2024-12-01" },
-      { distance: "70 km", date: "2024-12-02" },
-    ],
-  },
-  {
-    deviceId: "DEV54321",
-    vehicleRegNumber: "LMN789",
-    totalDistanceCovered: "1750 km",
-
-    coordinates: {
-      lat: "0.491429",
-      lng: "35.287844",
-    },
-    dailyDistances: [
-      { distance: "40 km", date: "2024-12-01" },
-      { distance: "90 km", date: "2024-12-02" },
-    ],
-  },
-  {
-    deviceId: "DEV09876",
-    vehicleRegNumber: "PQR321",
-    totalDistanceCovered: "2200 km",
-
-    coordinates: {
-      lat: "0.477787",
-      lng: "35.263581",
-    },
-    dailyDistances: [
-      { distance: "30 km", date: "2024-12-01" },
-      { distance: "100 km", date: "2024-12-02" },
-    ],
-  },
-  {
-    deviceId: "DEV11223",
-    vehicleRegNumber: "UVW654",
-    totalDistanceCovered: "1850 km",
-
-    coordinates: {
-      lat: "0.486496",
-      lng: "35.245610",
-    },
-    dailyDistances: [
-      { distance: "70 km", date: "2024-12-01" },
-      { distance: "75 km", date: "2024-12-02" },
-    ],
-  },
 ];
 
 export default function VehicleTab() {
@@ -101,7 +45,7 @@ export default function VehicleTab() {
   );
 }
 
-function VehicleCard({ vehicle }: { vehicle: VehicleType }) {
+export function VehicleCard({ vehicle }: { vehicle: VehicleType }) {
   return (
     <ThemedButton
       type="surface"

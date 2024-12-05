@@ -1,9 +1,28 @@
 import { useState, useEffect } from "react";
 import * as Location from "expo-location";
 
-export function useLocationWithDistance(vehicleCoordinates) {
-  const [phoneLocation, setPhoneLocation] = useState(null);
-  const [distance, setDistance] = useState(null);
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+interface VehicleCoordinates {
+  lat: string;
+  lng: string;
+}
+
+interface UseLocationWithDistanceReturn {
+  phoneLocation: Coordinates | null;
+  distance: string | null;
+  showDistance: boolean;
+  toggleShowDistance: () => void;
+}
+
+export function useLocationWithDistance(
+  vehicleCoordinates: VehicleCoordinates
+): UseLocationWithDistanceReturn {
+  const [phoneLocation, setPhoneLocation] = useState<Coordinates | null>(null);
+  const [distance, setDistance] = useState<string | null>(null);
   const [showDistance, setShowDistance] = useState(false);
 
   // Fetch phone's location
@@ -27,8 +46,14 @@ export function useLocationWithDistance(vehicleCoordinates) {
   // Calculate distance between phone and vehicle
   useEffect(() => {
     if (phoneLocation && vehicleCoordinates) {
-      const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const toRadians = (degrees) => degrees * (Math.PI / 180);
+      const calculateDistance = (
+        lat1: number,
+        lon1: number,
+        lat2: number,
+        lon2: number
+      ): number => {
+        const toRadians = (degrees: number): number =>
+          degrees * (Math.PI / 180);
         const R = 6371; // Earth's radius in kilometers
         const dLat = toRadians(lat2 - lat1);
         const dLon = toRadians(lon2 - lon1);

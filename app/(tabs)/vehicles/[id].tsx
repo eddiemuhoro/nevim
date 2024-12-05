@@ -199,30 +199,6 @@ export default function VehicleDetails() {
         </Box>
 
         <Box color={theme.surface} radius={25} pa={15}>
-          <Box direction="row" align="center" gap={10}>
-            <Box
-              width={40}
-              height={40}
-              align="center"
-              justify="center"
-              radius={20}
-              color={generateRandomPastelColor()}
-            >
-              <Image
-                source={require("@/assets/images/calendar-icon.png")}
-                style={{ width: "40%", height: "40%" }}
-              />
-            </Box>
-            <Box flex={1}>
-              <ThemedText style={{ opacity: 0.5 }} size={"sm"} weight="bold">
-                Distance Between Phone and Vehicle.
-              </ThemedText>
-              <ThemedText weight="bold">10 km</ThemedText>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box color={theme.surface} radius={25} pa={15}>
           <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
             <Box direction="row" align="center" gap={10}>
               <Box
@@ -359,7 +335,7 @@ export default function VehicleDetails() {
               </Box>
               <Box gap={2} flex={1}>
                 <ThemedText style={{ opacity: 0.5 }} size={"sm"} weight="bold">
-                  Vehicle Location
+                  Start Engine : {"09:30am"} - {"10:30am"}
                 </ThemedText>
                 <Box
                   direction="row"
